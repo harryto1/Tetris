@@ -83,9 +83,12 @@ class Block:
 
     def move(self, direction):
         for i in range(len(self.shape)):
-            if self.shape[i].x + direction < 0 or self.shape[i].x + direction >= 800:
-                return
             self.shape[i].x += direction
+        for i in range(len(self.shape)):
+            if self.shape[i].x < 0 or self.shape[i].x >= 800:
+                for j in range(len(self.shape)):
+                    self.shape[j].x -= direction
+                return
             for j in range(len(placed_blocks)):
                 if self.shape[i].x == placed_blocks[j].x and self.shape[i].y == placed_blocks[j].y:
                     for k in range(len(self.shape)):
