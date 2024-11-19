@@ -1,4 +1,4 @@
-from multiprocessing.context import set_spawning_popen
+
 
 import pygame, sys, random, time
 
@@ -45,9 +45,8 @@ def check_collision(current_block):
         if rect.y >= 800:
             return True
         for block in placed_blocks:
-            for placed_rect in block.shape:
-                if rect.colliderect(placed_rect):
-                    return True
+            if any(rect.colliderect(placed_rect) for placed_rect in block.shape):
+                return True
     return False
 
 # Set up the fonts
@@ -64,7 +63,7 @@ shapes = {
     'Z': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(160, 80, 78, 78)]
 }
 
-placed_blocks = set()
+placed_blocks = []
 
 block_colors = [RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW]
 
@@ -109,7 +108,8 @@ class Block:
         self.spawned = value
 
 
-current_block = Block(0, 0, random.choice(list(shapes.values())))
+current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                             for rect in random.choice(list(shapes.values()))])
 
 
 speed_x = 80
@@ -126,7 +126,8 @@ while running:
 
 
     if not current_block.spawned:
-        current_block = Block(0, 0, random.choice(list(shapes.values())))
+        current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                     for rect in random.choice(list(shapes.values()))])
         current_block.set_spawned(True)
 
     draw_grid()
@@ -146,8 +147,9 @@ while running:
 
     if check_collision(current_block):
         current_block.set_spawned(False)
-        placed_blocks.add(current_block)
-        current_block = Block(0, 0, random.choice(list(shapes.values())))
+        placed_blocks.append(current_block)
+        current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                     for rect in random.choice(list(shapes.values()))])
 
     if time.time() - initial_time > 1:
         current_block.fall()
@@ -155,11 +157,11 @@ while running:
             for i in range(len(current_block.shape)):
                 current_block.shape[i].y -= 80
             current_block.set_spawned(False)
-            placed_blocks.add(current_block)
-            current_block = Block(0, 0, random.choice(list(shapes.values())))
+            placed_blocks.append(current_block)
+            current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                         for rect in random.choice(list(shapes.values()))])
         initial_time = time.time()
 
-    print(placed_blocks)
 
     pygame.display.flip()
     clock.tick(60)
