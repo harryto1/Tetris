@@ -196,6 +196,9 @@ while running:
                                      for rect in random.choice(list(shapes.values()))])
         current_block.set_spawned(True)
 
+    score_text = font.render(f'Score: {score}', True, WHITE)
+    score_rect = score_text.get_rect(center=(WIDTH // 2, 20))
+    screen.blit(score_text, score_rect)
     draw_grid()
     current_block.draw()
     remove_line()
@@ -228,6 +231,15 @@ while running:
                                                  for rect in random.choice(list(shapes.values()))])
             if event.key == pygame.K_z or event.key == pygame.K_UP:
                 current_block.rotate()
+            if event.key == pygame.K_SPACE:
+                while not check_collision(current_block):
+                    current_block.fall()
+                for i in range(len(current_block.shape)):
+                    current_block.shape[i].y -= 40
+                current_block.set_spawned(False)
+                placed_blocks.append(current_block)
+                current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                             for rect in random.choice(list(shapes.values()))])
 
     if check_collision(current_block):
         current_block.set_spawned(False)
