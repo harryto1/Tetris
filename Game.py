@@ -49,6 +49,29 @@ def check_collision(current_block):
                 return True
     return False
 
+def remove_line():
+    for y in range(HEIGHT - 80, 0, -80):
+        count = 0
+        blocks_to_remove = []
+        for block in placed_blocks:
+            for rect in block.shape:
+                if rect.y == y:
+                    count += 1
+                    blocks_to_remove.append(rect)
+        if count == 10:
+            for block in blocks_to_remove:
+                for i in range(len(placed_blocks)):
+                    if block in placed_blocks[i].shape:
+                        placed_blocks[i].shape.remove(block)
+            for block in placed_blocks:
+                for rect in block.shape:
+                    if rect.y < y:
+                        rect.y += 80
+            global score
+            score += 10
+            break
+
+
 # Set up the fonts
 font = pygame.font.Font('freesansbold.ttf', 32)
 
@@ -56,7 +79,7 @@ font = pygame.font.Font('freesansbold.ttf', 32)
 shapes = {
     'I': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(0, 240, 78, 78)],
     'J': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(80, 160, 78, 78)],
-    'L': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(-80, 160, 78, 78)],
+    'L': [pygame.Rect(80, 0, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(80, 160, 78, 78), pygame.Rect(0, 160, 78, 78)],
     'O': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78)],
     'S': [pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78)],
     'T': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78), pygame.Rect(80, 80, 78, 78)],
@@ -107,6 +130,23 @@ class Block:
     def set_spawned(self, value):
         self.spawned = value
 
+    def rotate(self):
+        pivot = self.shape[1]  # Use the second block as the pivot
+        for rect in self.shape:
+            # Translate block to origin
+            x = rect.x - pivot.x
+            y = rect.y - pivot.y
+            # Rotate 90 degrees clockwise
+            rect.x = pivot.x - y
+            rect.y = pivot.y + x
+            # Check boundaries
+            if rect.x < 0 or rect.x >= WIDTH or rect.y < 0 or rect.y >= HEIGHT:
+                return  # Invalid rotation, do nothing
+            # Check collision with placed blocks
+            for block in placed_blocks:
+                if any(rect.colliderect(placed_rect) for placed_rect in block.shape):
+                    return  # Invalid rotation, do nothing
+
 
 current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
                              for rect in random.choice(list(shapes.values()))])
@@ -132,6 +172,7 @@ while running:
 
     draw_grid()
     current_block.draw()
+    remove_line()
     place_blocks(placed_blocks)
 
     for event in pygame.event.get():
@@ -144,6 +185,15 @@ while running:
                 current_block.move(80)
             if event.key == pygame.K_DOWN:
                 current_block.fall()
+                if check_collision(current_block):
+                    for i in range(len(current_block.shape)):
+                        current_block.shape[i].y -= 80
+                    current_block.set_spawned(False)
+                    placed_blocks.append(current_block)
+                    current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                                 for rect in random.choice(list(shapes.values()))])
+            if event.key == pygame.K_z or event.key == pygame.K_UP:
+                current_block.rotate()
 
     if check_collision(current_block):
         current_block.set_spawned(False)
