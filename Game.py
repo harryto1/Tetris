@@ -4,7 +4,7 @@ import pygame, sys, random, time
 pygame.init()
 
 # Set up the window
-WIDTH, HEIGHT = 400, 900
+WIDTH, HEIGHT = 401, 900
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tetris")
 screen.fill((255, 255, 255))
