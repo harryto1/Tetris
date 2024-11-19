@@ -1,3 +1,5 @@
+from multiprocessing.context import set_spawning_popen
+
 import pygame, sys, random, time
 
 # Initialize Pygame
@@ -34,16 +36,18 @@ def draw_grid():
 
 
 def place_blocks(placed_blocks):
-    for i in range(len(placed_blocks)):
-        pygame.draw.rect(screen, BLUE, placed_blocks[i])
+    for block in placed_blocks:
+        for rect in block.shape:
+            pygame.draw.rect(screen, block.color, rect)
 
 def check_collision(current_block):
-    for i in range(len(current_block.shape)):
-        if current_block.shape[i].y >= 720:
+    for rect in current_block.shape:
+        if rect.y >= 800:
             return True
-        for j in range(len(placed_blocks)):
-            if current_block.shape[i].x == placed_blocks[j].x and current_block.shape[i].y + 80 == placed_blocks[j].y:
-                return True
+        for block in placed_blocks:
+            for placed_rect in block.shape:
+                if rect.colliderect(placed_rect):
+                    return True
     return False
 
 # Set up the fonts
@@ -51,16 +55,16 @@ font = pygame.font.Font('freesansbold.ttf', 32)
 
 # Define all Tetris shapes
 shapes = {
-    'I': [pygame.Rect(0, 0, 80, 80), pygame.Rect(0, 80, 80, 80), pygame.Rect(0, 160, 80, 80), pygame.Rect(0, 240, 80, 80)],
-    'J': [pygame.Rect(0, 0, 80, 80), pygame.Rect(0, 80, 80, 80), pygame.Rect(0, 160, 80, 80), pygame.Rect(80, 160, 80, 80)],
-    'L': [pygame.Rect(0, 0, 80, 80), pygame.Rect(0, 80, 80, 80), pygame.Rect(0, 160, 80, 80), pygame.Rect(-80, 160, 80, 80)],
-    'O': [pygame.Rect(0, 0, 80, 80), pygame.Rect(80, 0, 80, 80), pygame.Rect(0, 80, 80, 80), pygame.Rect(80, 80, 80, 80)],
-    'S': [pygame.Rect(0, 80, 80, 80), pygame.Rect(80, 80, 80, 80), pygame.Rect(80, 0, 80, 80), pygame.Rect(160, 0, 80, 80)],
-    'T': [pygame.Rect(0, 0, 80, 80), pygame.Rect(80, 0, 80, 80), pygame.Rect(160, 0, 80, 80), pygame.Rect(80, 80, 80, 80)],
-    'Z': [pygame.Rect(0, 0, 80, 80), pygame.Rect(80, 0, 80, 80), pygame.Rect(80, 80, 80, 80), pygame.Rect(160, 80, 80, 80)]
+    'I': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(0, 240, 78, 78)],
+    'J': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(80, 160, 78, 78)],
+    'L': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(-80, 160, 78, 78)],
+    'O': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78)],
+    'S': [pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78)],
+    'T': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78), pygame.Rect(80, 80, 78, 78)],
+    'Z': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(160, 80, 78, 78)]
 }
 
-placed_blocks = []
+placed_blocks = set()
 
 block_colors = [RED, GREEN, BLUE, CYAN, MAGENTA, YELLOW]
 
@@ -72,6 +76,9 @@ class Block:
         self.shape = shape
         self.spawned = False
         self.color = random.choice(block_colors)
+
+    def __str__(self):
+        return f'Block at {self.x}, {self.y}'
 
     def draw(self):
         for i in range(len(self.shape)):
@@ -89,11 +96,14 @@ class Block:
                 for j in range(len(self.shape)):
                     self.shape[j].x -= direction
                 return
-            for j in range(len(placed_blocks)):
-                if self.shape[i].x == placed_blocks[j].x and self.shape[i].y == placed_blocks[j].y:
-                    for k in range(len(self.shape)):
-                        self.shape[k].x -= direction
-                    return
+
+        for block in placed_blocks:
+            for rect in block.shape:
+                for i in range(len(self.shape)):
+                    if self.shape[i].colliderect(rect):
+                        for j in range(len(self.shape)):
+                            self.shape[j].x -= direction
+                        return
 
     def set_spawned(self, value):
         self.spawned = value
@@ -114,9 +124,14 @@ running = True
 while running:
     screen.fill(BLACK)
 
+
     if not current_block.spawned:
         current_block = Block(0, 0, random.choice(list(shapes.values())))
         current_block.set_spawned(True)
+
+    draw_grid()
+    current_block.draw()
+    place_blocks(placed_blocks)
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -128,18 +143,23 @@ while running:
                 current_block.move(80)
             if event.key == pygame.K_DOWN:
                 current_block.fall()
-    if time.time() - initial_time > 1:
-        current_block.fall()
-        initial_time = time.time()
 
     if check_collision(current_block):
         current_block.set_spawned(False)
-        placed_blocks.extend(current_block.shape)
+        placed_blocks.add(current_block)
         current_block = Block(0, 0, random.choice(list(shapes.values())))
 
-    draw_grid()
-    place_blocks(placed_blocks)
-    current_block.draw()
+    if time.time() - initial_time > 1:
+        current_block.fall()
+        if check_collision(current_block):
+            for i in range(len(current_block.shape)):
+                current_block.shape[i].y -= 80
+            current_block.set_spawned(False)
+            placed_blocks.add(current_block)
+            current_block = Block(0, 0, random.choice(list(shapes.values())))
+        initial_time = time.time()
+
+    print(placed_blocks)
 
     pygame.display.flip()
     clock.tick(60)
