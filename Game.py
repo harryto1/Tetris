@@ -6,7 +6,7 @@ import pygame, sys, random, time
 pygame.init()
 
 # Set up the window
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 400, 800
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Tetris")
 screen.fill((255, 255, 255))
@@ -24,15 +24,35 @@ BLUE = (0, 0, 255)
 CYAN = (0, 255, 255)
 MAGENTA = (255, 0, 255)
 YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+PURPLE = (128, 0, 128)
 
 
 
 #Functions
 def draw_grid():
-    for i in range(0, WIDTH, 80):
+    for i in range(0, WIDTH, 40):
         pygame.draw.line(screen, WHITE, (i, 0), (i, HEIGHT))
-    for i in range(0, HEIGHT, 80):
+    for i in range(0, HEIGHT, 40):
         pygame.draw.line(screen, WHITE, (0, i), (WIDTH, i))
+
+def choose_color(shape):
+    for key, value in shapes.items():
+        if shape == value:
+            if key == 'I':
+                return CYAN
+            if key == 'J':
+                return BLUE
+            if key == 'L':
+                return ORANGE
+            if key == 'O':
+                return YELLOW
+            if key == 'S':
+                return GREEN
+            if key == 'T':
+                return PURPLE
+            if key == 'Z':
+                return RED
 
 
 def place_blocks(placed_blocks):
@@ -50,7 +70,7 @@ def check_collision(current_block):
     return False
 
 def remove_line():
-    for y in range(HEIGHT - 80, 0, -80):
+    for y in range(HEIGHT - 40, 0, -40):
         count = 0
         blocks_to_remove = []
         for block in placed_blocks:
@@ -66,24 +86,30 @@ def remove_line():
             for block in placed_blocks:
                 for rect in block.shape:
                     if rect.y < y:
-                        rect.y += 80
+                        rect.y += 40
             global score
             score += 10
             break
 
+def check_lose():
+    for block in placed_blocks:
+        for rect in block.shape:
+            if rect.y <= 0:
+                return True
+    return False
 
 # Set up the fonts
 font = pygame.font.Font('freesansbold.ttf', 32)
 
 # Define all Tetris shapes
 shapes = {
-    'I': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(0, 240, 78, 78)],
-    'J': [pygame.Rect(0, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(0, 160, 78, 78), pygame.Rect(80, 160, 78, 78)],
-    'L': [pygame.Rect(80, 0, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(80, 160, 78, 78), pygame.Rect(0, 160, 78, 78)],
-    'O': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78)],
-    'S': [pygame.Rect(0, 80, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78)],
-    'T': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(160, 0, 78, 78), pygame.Rect(80, 80, 78, 78)],
-    'Z': [pygame.Rect(0, 0, 78, 78), pygame.Rect(80, 0, 78, 78), pygame.Rect(80, 80, 78, 78), pygame.Rect(160, 80, 78, 78)]
+    'I': [pygame.Rect(0, 0, 38, 38), pygame.Rect(0, 40, 38, 38), pygame.Rect(0, 80, 38, 38), pygame.Rect(0, 120, 38, 38)],
+    'J': [pygame.Rect(0, 0, 38, 38), pygame.Rect(0, 40, 38, 38), pygame.Rect(0, 80, 38, 38), pygame.Rect(40, 80, 38, 38)],
+    'L': [pygame.Rect(40, 0, 38, 38), pygame.Rect(40, 40, 38, 38), pygame.Rect(40, 80, 38, 38), pygame.Rect(0, 80, 38, 38)],
+    'O': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(0, 40, 38, 38), pygame.Rect(40, 40, 38, 38)],
+    'S': [pygame.Rect(0, 40, 38, 38), pygame.Rect(40, 40, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38)],
+    'T': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38), pygame.Rect(40, 40, 38, 38)],
+    'Z': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(40, 40, 38, 38), pygame.Rect(80, 40, 38, 38)]
 }
 
 placed_blocks = []
@@ -97,7 +123,7 @@ class Block:
         self.y = y
         self.shape = shape
         self.spawned = False
-        self.color = random.choice(block_colors)
+        self.color = choose_color(shape)
 
     def __str__(self):
         return f'Block at {self.x}, {self.y}'
@@ -108,13 +134,13 @@ class Block:
 
     def fall(self):
         for i in range(len(self.shape)):
-            self.shape[i].y += 80
+            self.shape[i].y += 40
 
     def move(self, direction):
         for i in range(len(self.shape)):
             self.shape[i].x += direction
         for i in range(len(self.shape)):
-            if self.shape[i].x < 0 or self.shape[i].x >= 800:
+            if self.shape[i].x < 0 or self.shape[i].x >= 400:
                 for j in range(len(self.shape)):
                     self.shape[j].x -= direction
                 return
@@ -149,10 +175,10 @@ class Block:
 
 
 current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                             for rect in random.choice(list(shapes.values()))])
+                             for rect in random.choice(list(shapes.values()))],)
 
 
-speed_x = 80
+speed_x = 40
 speed_y = 80
 initial_time = time.time()
 
@@ -174,20 +200,28 @@ while running:
     current_block.draw()
     remove_line()
     place_blocks(placed_blocks)
+    if check_lose():
+        screen.fill(BLACK)
+        text = font.render('You Lose!', True, WHITE)
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        screen.blit(text, text_rect)
+        pygame.display.flip()
+        time.sleep(3)
+        break
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                current_block.move(-80)
+                current_block.move(-40)
             if event.key == pygame.K_RIGHT:
-                current_block.move(80)
+                current_block.move(40)
             if event.key == pygame.K_DOWN:
                 current_block.fall()
                 if check_collision(current_block):
                     for i in range(len(current_block.shape)):
-                        current_block.shape[i].y -= 80
+                        current_block.shape[i].y -= 40
                     current_block.set_spawned(False)
                     placed_blocks.append(current_block)
                     current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
@@ -205,7 +239,7 @@ while running:
         current_block.fall()
         if check_collision(current_block):
             for i in range(len(current_block.shape)):
-                current_block.shape[i].y -= 80
+                current_block.shape[i].y -= 40
             current_block.set_spawned(False)
             placed_blocks.append(current_block)
             current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
