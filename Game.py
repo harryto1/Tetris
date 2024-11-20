@@ -117,6 +117,16 @@ def check_lose():
                 return True
     return False
 
+def restart():
+    global placed_blocks, current_block, stored_block, score, speed
+    screen.fill(BLACK)
+    placed_blocks = []
+    current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+                                 for rect in random.choice(list(shapes.values()))])
+    stored_block = None
+    score = 0
+    speed = 1
+
 # Set up the fonts
 font = pygame.font.Font('freesansbold.ttf', 32)
 
@@ -246,7 +256,7 @@ while running:
         screen.blit(text, text_rect)
         pygame.display.flip()
         time.sleep(3)
-        break
+        restart()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -293,6 +303,8 @@ while running:
                     current_block.color = choose_color(current_block.shape)
                     stored_block = temp
                 current_block.already_stored = True
+            if event.key == pygame.K_r:
+                restart()
 
 
     if check_collision(current_block):
