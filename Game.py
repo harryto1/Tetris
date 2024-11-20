@@ -2,10 +2,12 @@ import pygame, sys, random, time
 
 # Initialize Pygame
 pygame.init()
+info = pygame.display.Info()
+HEIGHT = info.current_h - 100
 
 # Set up the window
-WIDTH, HEIGHT = 401, 900
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+WIDTH = 401
+screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("Tetris")
 screen.fill((255, 255, 255))
 pygame.display.flip()
@@ -305,6 +307,8 @@ while running:
                 current_block.already_stored = True
             if event.key == pygame.K_r:
                 restart()
+            if event.key == pygame.K_ESCAPE:
+                running = False
 
 
     if check_collision(current_block):
