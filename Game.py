@@ -204,6 +204,7 @@ class Block:
 
 
     def rotate(self):
+        global initial_time
         pivot = self.shape[1]  # Use the second block as the pivot
         for rect in self.shape:
             # Translate block to origin
@@ -212,13 +213,35 @@ class Block:
             # Rotate 90 degrees clockwise
             rect.x = pivot.x - y
             rect.y = pivot.y + x
-            # Check boundaries
-            if rect.x < 0 or rect.x >= WIDTH or rect.y < 0 or rect.y >= HEIGHT:
-                return  # Invalid rotation, do nothing
             # Check collision with placed blocks
+        for rect in self.shape:
             for block in placed_blocks:
-                if any(rect.colliderect(placed_rect) for placed_rect in block.shape):
-                    return  # Invalid rotation, do nothing
+                while any(rect.colliderect(placed_rect) for placed_rect in block.shape):
+                    for rectangle in self.shape:
+                        rectangle.y -= 40
+                    initial_time = time.time() # Reset the timer
+        for rect in self.shape:
+            if rect.x < 0:
+                self.move(40)
+            if rect.x >= 400:
+                self.move(-40)
+            if rect.y >= HEIGHT:
+                for rectangle in self.shape:
+                    rectangle.y -= 40
+                return
+            if rect.y < 100:
+                for rectangle in self.shape:
+                    rectangle.y += 40
+                return
+
+    def rotate_back(self, pivot):
+        for rect in self.shape:
+            # Translate block to origin
+            x = rect.x - pivot.x
+            y = rect.y - pivot.y
+            # Rotate 90 degrees counter-clockwise
+            rect.x = pivot.x + y
+            rect.y = pivot.y - x
 
 
 current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
