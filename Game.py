@@ -32,8 +32,8 @@ PURPLE = (128, 0, 128)
 #Functions
 def draw_grid():
     for i in range(0, WIDTH, 40):
-        pygame.draw.line(screen, WHITE, (i, 100), (i, HEIGHT))
-    for i in range(100, HEIGHT, 40):
+        pygame.draw.line(screen, WHITE, (i, 100), (i, HEIGHT + 1))
+    for i in range(100, HEIGHT + 1, 40):
         pygame.draw.line(screen, WHITE, (0, i), (WIDTH, i))
 
 def get_name(shape):
