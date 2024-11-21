@@ -242,6 +242,17 @@ class Block:
             # Rotate 90 degrees counter-clockwise
             rect.x = pivot.x + y
             rect.y = pivot.y - x
+    def predict_placement(self):
+        copy_of_shape = Block(self.x, self.y, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in self.shape])
+        while not check_collision(copy_of_shape):
+            copy_of_shape.fall()
+        for i in range(len(copy_of_shape.shape)):
+            copy_of_shape.shape[i].y -= 40
+        for rect in copy_of_shape.shape:
+            rect_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+            rect_surf.fill((255, 255, 255, 16))
+            pygame.draw.rect(rect_surf, self.color, rect_surf.get_rect(), 1)
+            screen.blit(rect_surf, (rect.x, rect.y))
 
 
 current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
@@ -270,6 +281,7 @@ while running:
     score_rect = score_text.get_rect(center=(75, 50))
     screen.blit(score_text, score_rect)
     draw_grid()
+    current_block.predict_placement()
     current_block.draw()
     remove_line()
     place_blocks(placed_blocks)
