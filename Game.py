@@ -2,6 +2,14 @@ import pygame, sys, random, time
 
 # Initialize Pygame
 pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load('./assets/music/tetris_theme.mp3')
+pygame.mixer.music.set_volume(0.1)
+pygame.mixer.music.play(-1)
+remove_line_music = pygame.mixer.Sound('./assets/sound_effects/clear_line.mp3')
+remove_line_music.set_volume(0.25)
+land_music = pygame.mixer.Sound('./assets/sound_effects/land.mp3')
+land_music.set_volume(0.25)
 info = pygame.display.Info()
 HEIGHT = info.current_h - 200
 
@@ -112,6 +120,7 @@ def remove_line():
             global score, speed
             score += 10
             speed /= 1.1
+            remove_line_music.play()
             break
 
 def draw_stored_block():
@@ -288,6 +297,7 @@ class Block:
             # Rotate 90 degrees counter-clockwise
             rect.x = pivot.x + y
             rect.y = pivot.y - x
+
     def predict_placement(self):
         copy_of_shape = Block(self.x, self.y, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in self.shape])
         while not check_collision(copy_of_shape):
@@ -353,6 +363,7 @@ while running:
                     for i in range(len(current_block.shape)):
                         current_block.shape[i].y -= 40
                     placed_blocks.append(current_block)
+                    land_music.play()
                     previous_block = current_block.name
                     current_block = next_piece
                     next_piece = generate_new_block()
@@ -366,6 +377,7 @@ while running:
                 for i in range(len(current_block.shape)):
                     current_block.shape[i].y -= 40
                 placed_blocks.append(current_block)
+                land_music.play()
                 previous_block = current_block.name
                 current_block = next_piece
                 next_piece = generate_new_block()
@@ -391,10 +403,22 @@ while running:
             if event.key == pygame.K_p:
                 if pause():
                     running = False
+            if event.key == pygame.K_m:
+                if pygame.mixer.music.get_busy():
+                    pygame.mixer.music.pause()
+                else:
+                    pygame.mixer.music.unpause()
+                if remove_line_music.get_volume() == 0.25:
+                    remove_line_music.set_volume(0)
+                    land_music.set_volume(0)
+                else:
+                    remove_line_music.set_volume(0.25)
+                    land_music.set_volume(0.25)
 
 
     if check_collision(current_block):
         placed_blocks.append(current_block)
+        land_music.play()
         previous_block = current_block.name
         current_block = next_piece
         next_piece = generate_new_block()
@@ -405,6 +429,7 @@ while running:
             for i in range(len(current_block.shape)):
                 current_block.shape[i].y -= 40
             placed_blocks.append(current_block)
+            land_music.play()
             previous_block = current_block.name
             current_block = next_piece
             next_piece = generate_new_block()
