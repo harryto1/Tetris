@@ -27,7 +27,7 @@ YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
 PURPLE = (128, 0, 128)
 
-
+previous_block = None # Store the name of the previous block
 
 #Functions
 def draw_grid():
@@ -64,6 +64,12 @@ def place_blocks(placed_blocks):
     for block in placed_blocks:
         for rect in block.shape:
             pygame.draw.rect(screen, block.color, rect)
+
+def generate_new_block():
+    new_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
+    while new_block.name == previous_block:
+        new_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
+    return new_block
 
 def check_collision(current_block):
     for rect in current_block.shape:
@@ -117,6 +123,31 @@ def check_lose():
         for rect in block.shape:
             if rect.y <= 100:
                 return True
+    return False
+
+def pause():
+    paused = True
+    while paused:
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    paused = False
+                if event.key == pygame.K_ESCAPE:
+                    return True
+        background = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+        background.fill((0, 0, 0, 100))
+        screen.blit(background, (0, 0))
+        text = font.render('Paused', True, WHITE)
+        text_2 = font.render('Press P to resume', True, WHITE)
+        text_3 = font.render('Press ESC to quit', True, WHITE)
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        text_2_rect = text_2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
+        text_3_rect = text_3.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
+        screen.blit(text, text_rect)
+        screen.blit(text_2, text_2_rect)
+        screen.blit(text_3, text_3_rect)
+        pygame.display.flip()
+        clock.tick(60)
     return False
 
 def restart():
@@ -255,8 +286,7 @@ class Block:
             screen.blit(rect_surf, (rect.x, rect.y))
 
 
-current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                             for rect in random.choice(list(shapes.values()))],)
+current_block = generate_new_block()
 
 
 speed = 1
@@ -273,8 +303,7 @@ while running:
 
 
     if not current_block.spawned:
-        current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                     for rect in random.choice(list(shapes.values()))])
+        current_block = generate_new_block()
         current_block.set_spawned(True)
 
     score_text = font.render(f'Score: {score}', True, WHITE)
@@ -310,8 +339,7 @@ while running:
                         current_block.shape[i].y -= 40
                     current_block.set_spawned(False)
                     placed_blocks.append(current_block)
-                    current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                                 for rect in random.choice(list(shapes.values()))])
+                    current_block = generate_new_block()
             if event.key == pygame.K_z or event.key == pygame.K_UP:
                 if current_block.name == 'O':
                     break
@@ -323,8 +351,7 @@ while running:
                     current_block.shape[i].y -= 40
                 current_block.set_spawned(False)
                 placed_blocks.append(current_block)
-                current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                             for rect in random.choice(list(shapes.values()))])
+                current_block = generate_new_block()
             if event.key == pygame.K_c:
                 if current_block.already_stored:
                     break
@@ -344,13 +371,15 @@ while running:
                 restart()
             if event.key == pygame.K_ESCAPE:
                 running = False
+            if event.key == pygame.K_p:
+                if pause():
+                    running = False
 
 
     if check_collision(current_block):
         current_block.set_spawned(False)
         placed_blocks.append(current_block)
-        current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                     for rect in random.choice(list(shapes.values()))])
+        current_block = generate_new_block()
 
     if time.time() - initial_time > speed:
         current_block.fall()
@@ -359,8 +388,7 @@ while running:
                 current_block.shape[i].y -= 40
             current_block.set_spawned(False)
             placed_blocks.append(current_block)
-            current_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                         for rect in random.choice(list(shapes.values()))])
+            current_block = generate_new_block()
         initial_time = time.time()
 
 
