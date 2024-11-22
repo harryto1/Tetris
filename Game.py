@@ -3,12 +3,12 @@ import pygame, sys, random, time
 # Initialize Pygame
 pygame.init()
 pygame.mixer.init()
-pygame.mixer.music.load('./assets/music/tetris_theme.mp3')
+pygame.mixer.music.load('./assets/music/tetris_theme.mp3') # Change these when compiling using pyinstaller
 pygame.mixer.music.set_volume(0.1)
 pygame.mixer.music.play(-1)
-remove_line_music = pygame.mixer.Sound('./assets/sound_effects/clear_line.mp3')
+remove_line_music = pygame.mixer.Sound('./assets/sound_effects/clear_line.mp3') # Change these when compiling using pyinstaller
 remove_line_music.set_volume(0.25)
-land_music = pygame.mixer.Sound('./assets/sound_effects/land.mp3')
+land_music = pygame.mixer.Sound('./assets/sound_effects/land.mp3') # Change these when compiling using pyinstaller
 land_music.set_volume(0.25)
 info = pygame.display.Info()
 HEIGHT = info.current_h - 200
