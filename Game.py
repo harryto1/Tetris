@@ -71,6 +71,14 @@ def generate_new_block():
         new_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
     return new_block
 
+def draw_next_block():
+    if next_piece.name == 'I' or next_piece.name == 'J' or next_piece.name == 'L':
+        for rect in rotated_shapes[next_piece.name]:
+            pygame.draw.rect(screen, choose_color(shapes[next_piece.name]), rect.move(100, -90))
+    else:
+        for rect in next_piece.shape:
+            pygame.draw.rect(screen, next_piece.color, rect.move(100, -90))
+
 def check_collision(current_block):
     for rect in current_block.shape:
         if rect.y >= HEIGHT:
@@ -154,8 +162,7 @@ def restart():
     global placed_blocks, current_block, stored_block, score, speed
     screen.fill(BLACK)
     placed_blocks = []
-    current_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height)
-                                 for rect in random.choice(list(shapes.values()))])
+    current_block = generate_new_block()
     stored_block = None
     score = 0
     speed = 1
@@ -198,7 +205,6 @@ class Block:
         self.y = y
         self.shape = shape
         self.name = get_name(shape)
-        self.spawned = False
         self.color = choose_color(shape)
         self.already_stored = False
 
@@ -287,6 +293,7 @@ class Block:
 
 
 current_block = generate_new_block()
+next_piece = generate_new_block()
 
 
 speed = 1
@@ -301,13 +308,8 @@ running = True
 while running:
     screen.fill(BLACK)
 
-
-    if not current_block.spawned:
-        current_block = generate_new_block()
-        current_block.set_spawned(True)
-
-    score_text = font.render(f'Score: {score}', True, WHITE)
-    score_rect = score_text.get_rect(center=(75, 50))
+    score_text = font.render(f'{score}', True, WHITE)
+    score_rect = score_text.get_rect(center=(50, 50))
     screen.blit(score_text, score_rect)
     draw_grid()
     current_block.predict_placement()
@@ -315,6 +317,7 @@ while running:
     remove_line()
     place_blocks(placed_blocks)
     draw_stored_block()
+    draw_next_block()
     if check_lose():
         screen.fill(BLACK)
         text = font.render('You Lose!', True, WHITE)
@@ -337,9 +340,10 @@ while running:
                 if check_collision(current_block):
                     for i in range(len(current_block.shape)):
                         current_block.shape[i].y -= 40
-                    current_block.set_spawned(False)
                     placed_blocks.append(current_block)
-                    current_block = generate_new_block()
+                    previous_block = current_block.name
+                    current_block = next_piece
+                    next_piece = generate_new_block()
             if event.key == pygame.K_z or event.key == pygame.K_UP:
                 if current_block.name == 'O':
                     break
@@ -349,9 +353,10 @@ while running:
                     current_block.fall()
                 for i in range(len(current_block.shape)):
                     current_block.shape[i].y -= 40
-                current_block.set_spawned(False)
                 placed_blocks.append(current_block)
-                current_block = generate_new_block()
+                previous_block = current_block.name
+                current_block = next_piece
+                next_piece = generate_new_block()
             if event.key == pygame.K_c:
                 if current_block.already_stored:
                     break
@@ -377,18 +382,20 @@ while running:
 
 
     if check_collision(current_block):
-        current_block.set_spawned(False)
         placed_blocks.append(current_block)
-        current_block = generate_new_block()
+        previous_block = current_block.name
+        current_block = next_piece
+        next_piece = generate_new_block()
 
     if time.time() - initial_time > speed:
         current_block.fall()
         if check_collision(current_block):
             for i in range(len(current_block.shape)):
                 current_block.shape[i].y -= 40
-            current_block.set_spawned(False)
             placed_blocks.append(current_block)
-            current_block = generate_new_block()
+            previous_block = current_block.name
+            current_block = next_piece
+            next_piece = generate_new_block()
         initial_time = time.time()
 
 
