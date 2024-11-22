@@ -3,10 +3,10 @@ import pygame, sys, random, time
 # Initialize Pygame
 pygame.init()
 info = pygame.display.Info()
-HEIGHT = info.current_h - 100
+HEIGHT = info.current_h - 200
 
 # Set up the window
-WIDTH = 401
+WIDTH = 601
 screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 pygame.display.set_caption("Tetris")
 screen.fill((255, 255, 255))
@@ -31,10 +31,10 @@ previous_block = None # Store the name of the previous block
 
 #Functions
 def draw_grid():
-    for i in range(0, WIDTH, 40):
-        pygame.draw.line(screen, WHITE, (i, 100), (i, HEIGHT + 1))
-    for i in range(100, HEIGHT + 1, 40):
-        pygame.draw.line(screen, WHITE, (0, i), (WIDTH, i))
+    for i in range(0, 401, 40):
+        pygame.draw.line(screen, WHITE, (i, 0), (i, HEIGHT + 1))
+    for i in range(0, HEIGHT + 1, 40):
+        pygame.draw.line(screen, WHITE, (0, i), (401, i))
 
 def get_name(shape):
     for key, value in shapes.items():
@@ -66,18 +66,21 @@ def place_blocks(placed_blocks):
             pygame.draw.rect(screen, block.color, rect)
 
 def generate_new_block():
-    new_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
+    new_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
     while new_block.name == previous_block:
-        new_block = Block(0, 100, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
+        new_block = Block(0, 0, [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))])
     return new_block
 
 def draw_next_block():
-    if next_piece.name == 'I' or next_piece.name == 'J' or next_piece.name == 'L':
-        for rect in rotated_shapes[next_piece.name]:
-            pygame.draw.rect(screen, choose_color(shapes[next_piece.name]), rect.move(100, -90))
-    else:
-        for rect in next_piece.shape:
-            pygame.draw.rect(screen, next_piece.color, rect.move(100, -90))
+    bounding_box = next_piece.shape[0].unionall(next_piece.shape[1:])
+    offset_x = (160 - bounding_box.width) // 2 - bounding_box.x
+    offset_y = (160 - bounding_box.height) // 2 - bounding_box.y + 175
+
+    for rect in next_piece.shape:
+        pygame.draw.rect(screen, next_piece.color, rect.move(WIDTH - 180 + offset_x, offset_y))
+
+    next_piece_container = pygame.Rect(WIDTH - 180, 175, 160, 160)
+    pygame.draw.rect(screen, WHITE, next_piece_container, 2)
 
 def check_collision(current_block):
     for rect in current_block.shape:
@@ -115,16 +118,20 @@ def draw_stored_block():
     global stored_block
     if stored_block is not None:
         if stored_block == 'I' or stored_block == 'J' or stored_block == 'L':
-            shape_rect = rotated_shapes[stored_block][0].unionall(rotated_shapes[stored_block][1:])
+            bounding_box = rotated_shapes[stored_block][0].unionall(rotated_shapes[stored_block][1:])
         else:
-            shape_rect = shapes[stored_block][0].unionall(shapes[stored_block][1:])
-        pygame.draw.rect(screen, BLACK, shape_rect.inflate(10, 10).move(240, -90))
-        if stored_block == 'I' or stored_block == 'J' or stored_block == 'L':
-            for rect in rotated_shapes[stored_block]:
-                pygame.draw.rect(screen, choose_color(shapes[stored_block]), rect.move(240, -90))
-        else:
-            for rect in shapes[stored_block]:
-                pygame.draw.rect(screen, choose_color(shapes[stored_block]), rect.move(240, -90))
+            bounding_box = shapes[stored_block][0].unionall(shapes[stored_block][1:])
+        offset_x = (160 - bounding_box.width) // 2 - bounding_box.x
+        offset_y = (160 - bounding_box.height) // 2 - bounding_box.y + 400
+
+        for rect in rotated_shapes[stored_block] if stored_block in rotated_shapes else shapes[stored_block]:
+            pygame.draw.rect(screen, choose_color(shapes[stored_block]), rect.move(WIDTH - 180 + offset_x, offset_y))
+
+        stored_block_container = pygame.Rect(WIDTH - 180, 400, 160, 160)
+        pygame.draw.rect(screen, WHITE, stored_block_container, 2)
+        stored_block_text = font.render('Hold:', True, WHITE)
+        stored_block_text_rect = stored_block_text.get_rect(center=(WIDTH - 100, 375))
+        screen.blit(stored_block_text, stored_block_text_rect)
 
 def check_lose():
     for block in placed_blocks:
@@ -172,26 +179,28 @@ font = pygame.font.Font('freesansbold.ttf', 32)
 
 # Define all Tetris shapes
 shapes = {
-    'I': [pygame.Rect(0, 100, 38, 38), pygame.Rect(0, 140, 38, 38), pygame.Rect(0, 180, 38, 38),
-          pygame.Rect(0, 220, 38, 38)],
-    'J': [pygame.Rect(0, 100, 38, 38), pygame.Rect(0, 140, 38, 38), pygame.Rect(0, 180, 38, 38),
-          pygame.Rect(40, 180, 38, 38)],
-    'L': [pygame.Rect(40, 100, 38, 38), pygame.Rect(40, 140, 38, 38), pygame.Rect(40, 180, 38, 38),
-          pygame.Rect(0, 180, 38, 38)],
-    'O': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(0, 140, 38, 38),
-          pygame.Rect(40, 140, 38, 38)],
-    'S': [pygame.Rect(0, 140, 38, 38), pygame.Rect(40, 140, 38, 38), pygame.Rect(40, 100, 38, 38),
-          pygame.Rect(80, 100, 38, 38)],
-    'T': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(80, 100, 38, 38),
-          pygame.Rect(40, 140, 38, 38)],
-    'Z': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(40, 140, 38, 38),
-          pygame.Rect(80, 140, 38, 38)]
+    'I': [pygame.Rect(0, 0, 38, 38), pygame.Rect(0, 40, 38, 38), pygame.Rect(0, 80, 38, 38),
+          pygame.Rect(0, 120, 38, 38)],
+    'J': [pygame.Rect(0, 0, 38, 38), pygame.Rect(0, 40, 38, 38), pygame.Rect(0, 80, 38, 38),
+          pygame.Rect(40, 80, 38, 38)],
+    'L': [pygame.Rect(40, 0, 38, 38), pygame.Rect(40, 40, 38, 38), pygame.Rect(40, 80, 38, 38),
+          pygame.Rect(0, 80, 38, 38)],
+    'O': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(0, 40, 38, 38),
+          pygame.Rect(40, 40, 38, 38)],
+    'S': [pygame.Rect(0, 40, 38, 38), pygame.Rect(40, 40, 38, 38), pygame.Rect(40, 0, 38, 38),
+          pygame.Rect(80, 0, 38, 38)],
+    'T': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38),
+          pygame.Rect(40, 40, 38, 38)],
+    'Z': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(40, 40, 38, 38),
+          pygame.Rect(80, 40, 38, 38)]
 }
 
 rotated_shapes = {
-    'I': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(80, 100, 38, 38), pygame.Rect(120, 100, 38, 38)],
-    'J': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(80, 100, 38, 38), pygame.Rect(80, 140, 38, 38)],
-    'L': [pygame.Rect(0, 100, 38, 38), pygame.Rect(40, 100, 38, 38), pygame.Rect(80, 100, 38, 38), pygame.Rect(0, 140, 38, 38)]
+    'I': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38),
+          pygame.Rect(120, 0, 38, 38)],
+    'J': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38),
+          pygame.Rect(80, 40, 38, 38)],
+    'L': [pygame.Rect(0, 0, 38, 38), pygame.Rect(40, 0, 38, 38), pygame.Rect(80, 0, 38, 38), pygame.Rect(0, 40, 38, 38)]
 }
 
 placed_blocks = []
@@ -308,9 +317,12 @@ running = True
 while running:
     screen.fill(BLACK)
 
-    score_text = font.render(f'{score}', True, WHITE)
-    score_rect = score_text.get_rect(center=(50, 50))
+    score_text = font.render(f'Score: {score}', True, WHITE)
+    score_rect = score_text.get_rect(center=(WIDTH - 100, 50))
+    next_piece_text = font.render('Next:', True, WHITE)
+    next_piece_rect = next_piece_text.get_rect(center=(WIDTH - 100, 150))
     screen.blit(score_text, score_rect)
+    screen.blit(next_piece_text, next_piece_rect)
     draw_grid()
     current_block.predict_placement()
     current_block.draw()
