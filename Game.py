@@ -170,8 +170,10 @@ def pause():
         screen.blit(text, text_rect)
         screen.blit(text_2, text_2_rect)
         screen.blit(text_3, text_3_rect)
+        pygame.mixer.music.pause()
         pygame.display.flip()
         clock.tick(60)
+    pygame.mixer.music.unpause()
     return False
 
 def restart():
@@ -180,6 +182,8 @@ def restart():
     placed_blocks = []
     current_block = generate_new_block()
     stored_block = None
+    pygame.mixer.music.rewind()
+    pygame.mixer.music.play(-1)
     score = 0
     speed = 1
 
@@ -346,6 +350,7 @@ while running:
         text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         screen.blit(text, text_rect)
         pygame.display.flip()
+        pygame.mixer.music.pause()
         time.sleep(3)
         restart()
 
