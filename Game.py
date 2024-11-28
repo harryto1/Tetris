@@ -119,7 +119,7 @@ def remove_line():
                         rect.y += 40
             global score, speed
             score += 10
-            speed /= 1.1
+            speed /= 1.01
             remove_line_music.play()
             break
 
@@ -364,6 +364,7 @@ while running:
                 current_block.move(40)
             if event.key == pygame.K_DOWN:
                 current_block.fall()
+                score += 1
                 if check_collision(current_block):
                     for i in range(len(current_block.shape)):
                         current_block.shape[i].y -= 40
@@ -379,6 +380,7 @@ while running:
             if event.key == pygame.K_SPACE:
                 while not check_collision(current_block):
                     current_block.fall()
+                    score += 1
                 for i in range(len(current_block.shape)):
                     current_block.shape[i].y -= 40
                 placed_blocks.append(current_block)
