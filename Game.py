@@ -35,6 +35,19 @@ YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
 PURPLE = (128, 0, 128)
 
+keybinds = {
+    'Left': [pygame.K_LEFT],
+    'Right': [pygame.K_RIGHT],
+    'Down': [pygame.K_DOWN],
+    'Rotate': [pygame.K_z],
+    'Store': [pygame.K_c],
+    'Pause': [pygame.K_p],
+    'Restart': [pygame.K_r],
+    'Quit': [pygame.K_ESCAPE],
+    'Drop': [pygame.K_SPACE]
+}
+
+
 previous_block = None # Store the name of the previous block
 
 #Functions
@@ -153,28 +166,139 @@ def pause():
     paused = True
     while paused:
         for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return True
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_p:
                     paused = False
                 if event.key == pygame.K_ESCAPE:
                     return True
+                if event.key == pygame.K_k:
+                    new_keybinds = change_keybinds()
+                    if new_keybinds is not None:
+                        global keybinds
+                        keybinds = new_keybinds
         background = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
         background.fill((0, 0, 0, 100))
         screen.blit(background, (0, 0))
         text = font.render('Paused', True, WHITE)
         text_2 = font.render('Press P to resume', True, WHITE)
         text_3 = font.render('Press ESC to quit', True, WHITE)
-        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-        text_2_rect = text_2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
-        text_3_rect = text_3.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
+        text_4 = font.render('Press K to change keybinds', True, WHITE)
+        text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+        text_2_rect = text_2.get_rect(center=(WIDTH // 2, HEIGHT // 2 ))
+        text_3_rect = text_3.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
+        text_4_rect = text_4.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
         screen.blit(text, text_rect)
         screen.blit(text_2, text_2_rect)
         screen.blit(text_3, text_3_rect)
+        screen.blit(text_4, text_4_rect)
         pygame.mixer.music.pause()
         pygame.display.flip()
         clock.tick(60)
     pygame.mixer.music.unpause()
     return False
+
+def change_keybinds():
+    screen.fill(BLACK)
+    title = font.render('Keybinds', True, WHITE)
+    title_rect = title.get_rect(center=(WIDTH // 2, 100))
+    text_1 = font.render('Press the key you want to change', True, WHITE)
+    text_1_rect = text_1.get_rect(center=(WIDTH // 2, 150))
+    text_2 = font.render("Press 'A' to add a keybind", True, WHITE)
+    text_2_rect = text_2.get_rect(center=(WIDTH // 2, 200))
+    screen.blit(text_1, text_1_rect)
+    screen.blit(text_2, text_2_rect)
+    screen.blit(title, title_rect)
+    for key in keybinds:
+        text = font.render(f'{key}:', True, WHITE)
+        text_rect = text.get_rect(center=(WIDTH // 4, 300 + list(keybinds.keys()).index(key) * 50))
+        screen.blit(text, text_rect)
+        keybind_text = ' + '.join([pygame.key.name(k) for k in keybinds[key]])
+        text = font.render(keybind_text, True, WHITE)
+        text_rect = text.get_rect(center=(3 * WIDTH // 4, 300 + list(keybinds.keys()).index(key) * 50))
+        screen.blit(text, text_rect)
+    pygame.display.flip()
+    changing = True
+    while changing:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    return keybinds
+                for key in keybinds:
+                    if event.key == pygame.K_a:
+                        screen.fill(BLACK)
+                        text_3 = font.render('Press the key you want to bind', True, WHITE)
+                        text_rect_3 = text_3.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                        screen.blit(text_3, text_rect_3)
+                        pygame.display.flip()
+                        while True:
+                            for event in pygame.event.get():
+                                if event.type == pygame.KEYDOWN:
+                                    screen.fill(BLACK)
+                                    new_key = event.key
+                                    text_4 = font.render('What action do you want to bind this key to?', True, WHITE)
+                                    text_rect_4 = text_4.get_rect(center=(WIDTH // 2, 150))
+                                    screen.blit(text_4, text_rect_4)
+                                    pygame.display.flip()
+                                    for key in keybinds:
+                                        text = font.render(f'{key}', True, WHITE)
+                                        text_rect = text.get_rect(center=(WIDTH // 2, 300 + (list(keybinds.keys()).index(key) * 50) - 50))
+                                        screen.blit(text, text_rect)
+                                    selection_cursor = pygame.Rect(WIDTH // 2 - 100, 300 - 25, 200, 50)
+                                    pygame.draw.rect(screen, WHITE, selection_cursor, 2)
+                                    pygame.display.flip()
+                                    selecting = True
+                                    while selecting:
+                                        for event in pygame.event.get():
+                                            if event.type == pygame.QUIT:
+                                                return
+                                            if event.type == pygame.KEYDOWN:
+                                                if event.key == pygame.K_UP:
+                                                    print(selection_cursor.y)
+                                                    if selection_cursor.y > 250:
+                                                        pygame.draw.rect(screen, BLACK, selection_cursor, 2)
+                                                        selection_cursor.y -= 50
+                                                    else:
+                                                        pygame.draw.rect(screen, BLACK, selection_cursor, 2)
+                                                if event.key == pygame.K_DOWN:
+                                                    if selection_cursor.y > 300 + 50 * (len(keybinds) - 3):
+                                                        pygame.draw.rect(screen, BLACK, selection_cursor, 2)
+                                                    else:
+                                                        pygame.draw.rect(screen, BLACK, selection_cursor, 2)
+                                                        selection_cursor.y += 50
+                                                if event.key == pygame.K_RETURN:
+                                                    if isinstance(keybinds[list(keybinds.keys())[
+                                                        selection_cursor.y // 50 - 4]], list):
+                                                        keybinds[
+                                                            list(keybinds.keys())[selection_cursor.y // 50 - 4]].append(
+                                                            new_key)
+                                                    else:
+                                                        keybinds[
+                                                            list(keybinds.keys())[selection_cursor.y // 50 - 4]] = [
+                                                            keybinds[
+                                                                list(keybinds.keys())[selection_cursor.y // 50 - 4]],
+                                                            new_key]
+                                                    selecting = False
+                                                    print(keybinds)
+                                                pygame.draw.rect(screen, WHITE, selection_cursor, 2)
+                                                pygame.display.flip()
+                                    return keybinds
+                    if event.key in keybinds[key]:
+                        screen.fill(BLACK)
+                        text_3 = font.render('Press the key you want to bind', True, WHITE)
+                        text_rect_3 = text_3.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                        screen.blit(text_3, text_rect_3)
+                        pygame.display.flip()
+                        while True:
+                            for event in pygame.event.get():
+                                if event.type == pygame.KEYDOWN:
+                                    keybinds[key] = [event.key]
+                                    return keybinds
+
+    return keybinds
 
 def restart():
     global placed_blocks, current_block, stored_block, score, speed
@@ -358,58 +482,61 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_LEFT:
-                current_block.move(-40)
-            if event.key == pygame.K_RIGHT:
-                current_block.move(40)
-            if event.key == pygame.K_DOWN:
-                current_block.fall()
-                score += 1
-                if check_collision(current_block):
-                    for i in range(len(current_block.shape)):
-                        current_block.shape[i].y -= 40
-                    placed_blocks.append(current_block)
-                    land_music.play()
-                    previous_block = current_block.name
-                    current_block = next_piece
-                    next_piece = generate_new_block()
-            if event.key == pygame.K_z or event.key == pygame.K_UP:
-                if current_block.name == 'O':
-                    break
-                current_block.rotate()
-            if event.key == pygame.K_SPACE:
-                while not check_collision(current_block):
-                    current_block.fall()
-                    score += 1
-                for i in range(len(current_block.shape)):
-                    current_block.shape[i].y -= 40
-                placed_blocks.append(current_block)
-                land_music.play()
-                previous_block = current_block.name
-                current_block = next_piece
-                next_piece = generate_new_block()
-            if event.key == pygame.K_c:
-                if current_block.already_stored:
-                    break
-                if stored_block is None:
-                    stored_block = current_block.name
-                    current_block.shape = [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))]
-                    current_block.name = get_name(current_block.shape)
-                    current_block.color = choose_color(current_block.shape)
-                else:
-                    temp = current_block.name
-                    current_block.shape = [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in shapes[stored_block]]
-                    current_block.name = stored_block
-                    current_block.color = choose_color(current_block.shape)
-                    stored_block = temp
-                current_block.already_stored = True
-            if event.key == pygame.K_r:
-                restart()
-            if event.key == pygame.K_ESCAPE:
-                running = False
-            if event.key == pygame.K_p:
-                if pause():
-                    running = False
+            for key in keybinds:
+                if event.key in keybinds[key]:
+                    if key == 'Right':
+                        current_block.move(40)
+                    if key == 'Left':
+                        current_block.move(-40)
+                    if key == 'Down':
+                        current_block.fall()
+                        score += 1
+                        if check_collision(current_block):
+                            for i in range(len(current_block.shape)):
+                                current_block.shape[i].y -= 40
+                            placed_blocks.append(current_block)
+                            land_music.play()
+                            previous_block = current_block.name
+                            current_block = next_piece
+                            next_piece = generate_new_block()
+                    if key == 'Rotate':
+                        if current_block.name == 'O':
+                            break
+                        current_block.rotate()
+                    if key == 'Store':
+                        if current_block.already_stored:
+                            break
+                        if stored_block is None:
+                            stored_block = current_block.name
+                            current_block.shape = [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in random.choice(list(shapes.values()))]
+                            current_block.name = get_name(current_block.shape)
+                            current_block.color = choose_color(current_block.shape)
+                        else:
+                            temp = current_block.name
+                            current_block.shape = [pygame.Rect(rect.x, rect.y, rect.width, rect.height) for rect in shapes[stored_block]]
+                            current_block.name = stored_block
+                            current_block.color = choose_color(current_block.shape)
+                            stored_block = temp
+                        current_block.already_stored = True
+                    if key == 'Restart':
+                        restart()
+                    if key == 'Quit':
+                        running = False
+                    if key == 'Pause':
+                        if pause():
+                            running = False
+                    if key == 'Drop':
+                        while not check_collision(current_block):
+                            current_block.fall()
+                            score += 1
+                        for i in range(len(current_block.shape)):
+                            current_block.shape[i].y -= 40
+                        placed_blocks.append(current_block)
+                        land_music.play()
+                        previous_block = current_block.name
+                        current_block = next_piece
+                        next_piece = generate_new_block()
+
             if event.key == pygame.K_m:
                 if pygame.mixer.music.get_busy():
                     pygame.mixer.music.pause()
